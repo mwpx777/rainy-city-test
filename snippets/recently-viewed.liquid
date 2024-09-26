@@ -47,7 +47,8 @@
                 productImg : "{{ product.featured_image | img_url: '' }}",
                 productPrice : "{{ product.price | money | remove_first: '' }}",
                 productUrl : "{{ product.url }}",
-                variantId : "{{ product.selected_or_first_available_variant.id }}"
+                variantId : "{{ product.selected_or_first_available_variant.id }}",
+                productHandle : "{{ product.handle }}"
             };
     
             // init empty array to push data
@@ -58,7 +59,6 @@
             let jsonRespArrStr; 
            
             const numberOfProduct = 4;
-             
             productArray.push(pdpData);
             // Get the product title from pdpData 
             const currentPdpTitle = pdpData.productTitle;
@@ -110,11 +110,14 @@
         function getRecentPdp (){
         // convert localStorage data into object
             const pdpData = JSON.parse(localStorage.getItem('recently_viewed'));
-            console.log(pdpData)
             
-            const recentViewHtml = []
+            const recentViewHtml = [];
+
+            const currentProductTitle = "{{product.handle}}"
+            console.log(currentProductTitle, "current")
 
             pdpData.forEach(function(item) {
+                if (item.productHandle !== currentProductTitle) {
                 recentViewHtml.push(`
                     <section id="Recent">
                         <div class="recent-product">
@@ -190,6 +193,7 @@
                         {%- endform -%}
                     </section>
                 `)
+                }
             })
             // Now consolidate the data 
             const recentBlock = `${recentViewHtml.join('')}`
