@@ -107,7 +107,7 @@
         <div class="recentPdpBlock"></div>
 
     <script>
-        function getRecentPdp (){
+        function getRecentPdp (){            
         // convert localStorage data into object
             const pdpData = JSON.parse(localStorage.getItem('recently_viewed'));
             
@@ -205,5 +205,16 @@
         }
 
         getRecentPdp();
+
+        function checkEmptyDiv (){
+            const isEmpty = document.querySelector('.recentPdpBlock').innerHTML === "";
+            if (isEmpty) {
+                document.querySelector(".recently-title").style.display = "none";
+            } else {
+                document.querySelector(".recently-title").style.display = "block";
+            }
+        }
+
+        checkEmptyDiv();
 
     </script>
