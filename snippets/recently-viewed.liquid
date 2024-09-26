@@ -1,1 +1,206 @@
-<h2> Recently Viewed</h2>
+
+<style>
+@media only screen and (min-width: 750px){ 
+    .recentPdpBlock{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: var(--grid-desktop-horizontal-spacing);
+    }
+}
+
+@media only screen and (max-width: 576px){
+    .recentPdpBlock{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: var(--grid-desktop-horizontal-spacing);
+    }
+    .recent-product img{
+        height: 230px !important;
+    }
+}
+
+.recent-product{
+    cursor: pointer;
+}
+
+.recent-product img {
+    height: 250px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.recent-product h3.recent-product__title {
+    font-size: 1.3rem;
+    padding-bottom: 10px; 
+}
+
+.recent-product h3.recent-product__title a {
+    color: black;
+    text-decoration: none;
+}
+
+</style>
+<script>
+        function setRecentlyViewedPdp() {
+            const pdpData = {
+                productTitle : "{{ product.title }}",
+                productImg : "{{ product.featured_image | img_url: '' }}",
+                productPrice : "{{ product.price | money | remove_first: '' }}",
+                productUrl : "{{ product.url }}",
+                variantId : "{{ product.selected_or_first_available_variant.id }}"
+            };
+    
+            // init empty array to push data
+            const productArray = [];
+             
+            let jsonResp;
+            let jsonRespArr;
+            let jsonRespArrStr; 
+           
+            const numberOfProduct = 4;
+             
+            productArray.push(pdpData);
+            // Get the product title from pdpData 
+            const currentPdpTitle = pdpData.productTitle;
+            // Convert current page data into strings 
+            const pdpDataString = JSON.stringify(productArray);
+            // Set the variable for localStorage 
+            const localData = localStorage.getItem('recently_viewed');
+          
+            if (localData == null) {
+                localStorage.setItem('recently_viewed', pdpDataString);
+            }
+            else if ( localData != null ) {
+                // Create Variable for oldData or Previous page 
+                const oldPdpData = localStorage.getItem('recently_viewed');
+                // count the amount of data stored in strings so that we can remove old products from the stack 
+                const countPdpData = (oldPdpData.match(/productTitle/g) || []).length;
+                // check if user is not visiting page again 
+                const reVisitPdp =  oldPdpData.includes(currentPdpTitle);
+                // Get old data, merged it with new data and store merged data
+                if (countPdpData < numberOfProduct && reVisitPdp == false) {
+                    jsonResp = JSON.parse(oldPdpData);
+                    jsonRespArr = jsonResp.concat(productArray);
+                    jsonRespArrStr = JSON.stringify(jsonRespArr);
+                    localStorage.setItem('recently_viewed', jsonRespArrStr);
+                }
+                // if visited more the 4 pages delete first page data 
+                else if (countPdpData >= numberOfProduct && reVisitPdp == false) {
+                    jsonResp = JSON.parse(oldPdpData);
+                    jsonResp.shift();
+                    jsonRespArr = jsonResp.concat(productArray);
+                    jsonRespArr =  JSON.stringify(jsonRespArr);
+                    localStorage.setItem('recently_viewed', jsonRespArr);
+                }
+            }
+        }
+        
+        setRecentlyViewedPdp();
+
+        // set variable for Local Storage Data 
+        const localViewed = localStorage.recently_viewed; 
+    </script>
+
+        <div class="recently-title">
+            <h2>Recently Viewed</h2>
+        </div>
+        <div class="recentPdpBlock"></div>
+
+    <script>
+        function getRecentPdp (){
+        // convert localStorage data into object
+            const pdpData = JSON.parse(localStorage.getItem('recently_viewed'));
+            console.log(pdpData)
+            
+            const recentViewHtml = []
+
+            pdpData.forEach(function(item) {
+                recentViewHtml.push(`
+                    <section id="Recent">
+                        <div class="recent-product">
+                            <div class="recent-product__img">
+                                <a href="${item.productUrl}"><img src='${item.productImg}'/></a>
+                            </div>
+                            <h3 class="recent-product__title">
+                                <a class="recent-product__url" href="${item.productUrl}">
+                                ${item.productTitle}
+                                </a>
+                            </h3>
+                            <p class="recent-productPrice">${item.productPrice}</p>
+                        </div>
+        
+                        {%- form 'product',
+                            product,
+                            id: product_form_id,
+                            class: 'form',
+                            novalidate: 'novalidate',
+                            data-type: 'add-to-cart-form'
+                        -%}
+                            <input
+                            type="hidden"
+                            name="id"
+                            value="${ item.variantId }"
+                            {% if product.selected_or_first_available_variant.available == false
+                                or quantity_rule_soldout
+                                or product.selected_or_first_available_variant == null
+                            %}
+                                disabled
+                            {% endif %}
+                            class="product-variant-id"
+                            >
+
+                            {%- if gift_card_recipient_feature_active -%}
+                            {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
+                            {%- endif -%}
+
+                            <div class="product-form__buttons">
+                            {%- liquid
+                                assign check_against_inventory = true
+                                if product.selected_or_first_available_variant.inventory_management != 'shopify' or product.selected_or_first_available_variant.inventory_policy == 'continue'
+                                assign check_against_inventory = false
+                                endif
+                                if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+                                assign quantity_rule_soldout = true
+                                endif
+                            -%}
+                            <button
+                                id="ProductSubmitButton-{{ section_id }}"
+                                type="submit"
+                                name="add"
+                                class="product-form__submit button button--full-width button--primary add-to-cart"
+                                {% if product.selected_or_first_available_variant.available == false
+                                or quantity_rule_soldout
+                                or product.selected_or_first_available_variant == null
+                                %}
+                                disabled
+                                {% endif %}
+                            >
+                                <span>
+                                {%- if product.selected_or_first_available_variant == null -%}
+                                    {{ 'products.product.unavailable' | t }}
+                                {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
+                                    {{ 'products.product.sold_out' | t }}
+                                {%- else -%}
+                                    {{ 'products.product.add_to_cart' | t }}
+                                {%- endif -%}
+                                </span>
+                                {%- render 'loading-spinner' -%}
+                            </button>
+                            </div>
+                        {%- endform -%}
+                    </section>
+                `)
+            })
+            // Now consolidate the data 
+            const recentBlock = `${recentViewHtml.join('')}`
+            // Inject into PDP page
+            const contentBlock = document.querySelectorAll('.recentPdpBlock');
+            // Push the data
+            contentBlock.forEach(element =>{
+                element.innerHTML = recentBlock;
+            })
+        }
+
+        getRecentPdp();
+
+    </script>

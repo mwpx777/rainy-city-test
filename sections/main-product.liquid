@@ -717,13 +717,14 @@
         assign seo_media = product.featured_media
       endif
     -%}
+    {% render 'recently-viewed' %}
 
     <script type="application/ld+json">
       {{ product | structured_data }}
     </script>
   </div>
 
-  {% render 'recently-viewed' %}
+  
 </product-info>
 
 {% schema %}
